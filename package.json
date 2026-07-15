@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "ts-node src/index.ts",
     "dev": "ts-node src/index.ts",
+    "helloworld": "ts-node examples/helloworld.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -20,6 +21,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@types/archiver": "^8.0.0",
+    "archiver": "^8.0.0",
     "fast-xml-parser": "^4.5.0",
     "jszip": "^3.10.1",
     "xmlbuilder2": "^3.1.1"

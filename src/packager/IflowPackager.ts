@@ -1,0 +1,197 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import { ZipArchive } from 'archiver';
+
+/**
+ * IflowPackager - Creates complete CPI artifact
+ *
+ * Generates all required files:
+ * - MANIFEST.MF
+ * - .project
+ * - metainfo.prop
+ * - parameters.prop
+ * - parameters.propdef
+ * - ZIP archive
+ *
+ * Directory structure:
+ *   HelloWorld/
+ *       META-INF/
+ *           MANIFEST.MF
+ *       .project
+ *       src/main/resources/
+ *           metainfo.prop
+ *           parameters.prop
+ *           parameters.propdef
+ *           scenarioflows/integrationflow/
+ *               HelloWorld.iflw
+ */
+export class IflowPackager {
+
+    /**
+     * Packages a complete CPI artifact
+     *
+     * @param flowDir - Directory containing .iflw file (e.g., /tmp/HelloWorld)
+     * @param flowName - Name of the flow (e.g., "HelloWorld")
+     * @param outputZip - Output ZIP path (e.g., /tmp/HelloWorld.zip)
+     */
+    async package(flowDir: string, flowName: string, outputZip: string): Promise<void> {
+
+        // Create MANIFEST.MF
+        this.createManifest(flowDir, flowName);
+
+        // Create .project
+        this.createProject(flowDir, flowName);
+
+        // Create metainfo.prop
+        this.createMetainfo(flowDir, flowName);
+
+        // Create parameters.prop and parameters.propdef
+        this.createParameters(flowDir);
+
+        // Create ZIP
+        await this.createZip(flowDir, outputZip);
+
+        console.log(`✅ Generated ${outputZip}`);
+    }
+
+    private createManifest(flowDir: string, flowName: string): void {
+        const metaInfDir = path.join(flowDir, 'META-INF');
+        fs.mkdirSync(metaInfDir, { recursive: true });
+
+        const manifest = [
+            'Manifest-Version: 1.0',
+            `Bundle-Name: ${flowName}`,
+            `Bundle-SymbolicName: ${flowName}`,
+            'Bundle-Version: 1.0.0',
+            'Bundle-ManifestVersion: 2',
+            'Import-Package: com.sap.esb.application.services.cxf.interceptor,',
+            ' com.sap.esb.security,',
+            ' com.sap.it.op.agent.api,',
+            ' com.sap.it.op.agent.collector.camel,',
+            ' com.sap.it.op.agent.collector.cxf,',
+            ' com.sap.it.op.agent.mpl,',
+            ' javax.jms,',
+            ' javax.jws,',
+            ' javax.wsdl,',
+            ' javax.xml.bind.annotation,',
+            ' javax.xml.namespace,',
+            ' javax.xml.ws,',
+            ' org.apache.camel;version="2.8",',
+            ' org.apache.camel.builder;version="2.8",',
+            ' org.apache.camel.builder.xml;version="2.8",',
+            ' org.apache.camel.component.cxf,',
+            ' org.apache.camel.model;version="2.8",',
+            ' org.apache.camel.processor;version="2.8",',
+            ' org.apache.camel.processor.aggregate;version="2.8",',
+            ' org.apache.camel.spring.spi;version="2.8",',
+            ' org.apache.commons.logging,',
+            ' org.apache.cxf.binding,',
+            ' org.apache.cxf.binding.soap,',
+            ' org.apache.cxf.binding.soap.spring,',
+            ' org.apache.cxf.bus,',
+            ' org.apache.cxf.bus.resource,',
+            ' org.apache.cxf.bus.spring,',
+            ' org.apache.cxf.buslifecycle,',
+            ' org.apache.cxf.catalog,',
+            ' org.apache.cxf.configuration.jsse,',
+            ' org.apache.cxf.configuration.spring,',
+            ' org.apache.cxf.endpoint,',
+            ' org.apache.cxf.headers,',
+            ' org.apache.cxf.interceptor,',
+            ' org.apache.cxf.management.jmx,',
+            ' org.apache.cxf.phase,',
+            ' org.apache.cxf.resource,',
+            ' org.apache.cxf.service.factory,',
+            ' org.apache.cxf.service.model,',
+            ' org.apache.cxf.transport,',
+            ' org.apache.cxf.transport.common.gzip,',
+            ' org.apache.cxf.transport.http,',
+            ' org.apache.cxf.transport.http.policy,',
+            ' org.apache.cxf.ws.rm.policy,',
+            ' org.apache.cxf.ws.security.wss4j,',
+            ' org.apache.cxf.wsdl,',
+            ' org.apache.cxf.wsdl11,',
+            ' org.osgi.framework;version=1.3.0,',
+            ' org.osgi.service.blueprint;version="[1.0.0,2.0.0)",',
+            ' org.slf4j;version="1.6",',
+            ' org.springframework.beans.factory.config;version="3.0"',
+            ''
+        ].join('\n');
+
+        const manifestPath = path.join(metaInfDir, 'MANIFEST.MF');
+        fs.writeFileSync(manifestPath, manifest, 'utf-8');
+    }
+
+    private createProject(flowDir: string, flowName: string): void {
+        const project = [
+            '<?xml version="1.0" encoding="UTF-8"?>',
+            '<projectDescription>',
+            `    <name>${flowName}</name>`,
+            '    <comment/>',
+            '    <projects/>',
+            '    <buildSpec>',
+            '        <buildCommand>',
+            '            <name>org.eclipse.jdt.core.javabuilder</name>',
+            '            <arguments/>',
+            '        </buildCommand>',
+            '    </buildSpec>',
+            '    <natures>',
+            '        <nature>org.eclipse.jdt.core.javanature</nature>',
+            '    </natures>',
+            '</projectDescription>',
+            ''
+        ].join('\n');
+
+        const projectPath = path.join(flowDir, '.project');
+        fs.writeFileSync(projectPath, project, 'utf-8');
+    }
+
+    private createMetainfo(flowDir: string, flowName: string): void {
+        const resourcesDir = path.join(flowDir, 'src', 'main', 'resources');
+        fs.mkdirSync(resourcesDir, { recursive: true });
+
+        const metainfo = [
+            `#Store metainfo properties`,
+            `#${new Date().toISOString()}`,
+            `description=${flowName}`,
+            ''
+        ].join('\n');
+
+        const metainfoPath = path.join(resourcesDir, 'metainfo.prop');
+        fs.writeFileSync(metainfoPath, metainfo, 'utf-8');
+    }
+
+    private createParameters(flowDir: string): void {
+        const resourcesDir = path.join(flowDir, 'src', 'main', 'resources');
+
+        // parameters.prop (empty for HelloWorld)
+        const paramProp = [
+            `#`,
+            `#${new Date().toISOString()}`,
+            ''
+        ].join('\n');
+        fs.writeFileSync(path.join(resourcesDir, 'parameters.prop'), paramProp, 'utf-8');
+
+        // parameters.propdef (empty for HelloWorld)
+        const paramPropdef = [
+            `#`,
+            `#${new Date().toISOString()}`,
+            ''
+        ].join('\n');
+        fs.writeFileSync(path.join(resourcesDir, 'parameters.propdef'), paramPropdef, 'utf-8');
+    }
+
+    private createZip(sourceDir: string, outputZip: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const output = fs.createWriteStream(outputZip);
+            const archive = new ZipArchive({ zlib: { level: 9 } });
+
+            output.on('close', () => resolve());
+            archive.on('error', (err: Error) => reject(err));
+
+            archive.pipe(output);
+            archive.directory(sourceDir, false);
+            archive.finalize();
+        });
+    }
+}
