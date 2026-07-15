@@ -1,5 +1,6 @@
 import { IFlow } from "../model/IFlow";
 import { BpmnProcess } from "../ir/BpmnProcess";
+import { BpmnSequenceFlow } from "../ir/BpmnSequenceFlow";
 import { ComponentMapper } from "./ComponentMapper";
 
 /**
@@ -18,7 +19,7 @@ import { ComponentMapper } from "./ComponentMapper";
  * Responsibilities:
  * - Map IFlow → BpmnProcess
  * - Use ComponentMapper for each component
- * - Transform connections → sequence flows (future)
+ * - Transform connections → sequence flows ✅
  * - Add start/end events (future)
  *
  * This is the orchestrator that uses ComponentMapper to build
@@ -47,10 +48,10 @@ export class BpmnProcessMapper {
      *
      * Current implementation:
      * - Maps all components using ComponentMapper
+     * - Maps all connections to BPMN sequence flows
      *
      * Future enhancements:
      * - Add start/end events
-     * - Map connections to sequence flows
      * - Add participants for adapters
      * - Generate message flows
      *
@@ -78,8 +79,18 @@ export class BpmnProcessMapper {
             process.nodes.push(node);
         });
 
+        // Map connections to sequence flows
+        const connections = flow.getConnections();
+        connections.forEach(connection => {
+            process.flows.push(
+                new BpmnSequenceFlow(
+                    connection.from.id,
+                    connection.to.id
+                )
+            );
+        });
+
         // TODO: Add start/end events
-        // TODO: Map connections to sequence flows
         // TODO: Add participants for adapters
 
         return process;
