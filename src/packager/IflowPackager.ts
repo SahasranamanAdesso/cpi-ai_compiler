@@ -58,63 +58,36 @@ export class IflowPackager {
         const metaInfDir = path.join(flowDir, 'META-INF');
         fs.mkdirSync(metaInfDir, { recursive: true });
 
+        const symbolicName = flowName.replace(/\s+/g, '_');
         const manifest = [
             'Manifest-Version: 1.0',
-            `Bundle-Name: ${flowName}`,
-            `Bundle-SymbolicName: ${flowName}`,
-            'Bundle-Version: 1.0.0',
             'Bundle-ManifestVersion: 2',
-            'Import-Package: com.sap.esb.application.services.cxf.interceptor,',
-            ' com.sap.esb.security,',
-            ' com.sap.it.op.agent.api,',
-            ' com.sap.it.op.agent.collector.camel,',
-            ' com.sap.it.op.agent.collector.cxf,',
-            ' com.sap.it.op.agent.mpl,',
-            ' javax.jms,',
-            ' javax.jws,',
-            ' javax.wsdl,',
-            ' javax.xml.bind.annotation,',
-            ' javax.xml.namespace,',
-            ' javax.xml.ws,',
-            ' org.apache.camel;version="2.8",',
-            ' org.apache.camel.builder;version="2.8",',
-            ' org.apache.camel.builder.xml;version="2.8",',
-            ' org.apache.camel.component.cxf,',
-            ' org.apache.camel.model;version="2.8",',
-            ' org.apache.camel.processor;version="2.8",',
-            ' org.apache.camel.processor.aggregate;version="2.8",',
-            ' org.apache.camel.spring.spi;version="2.8",',
-            ' org.apache.commons.logging,',
-            ' org.apache.cxf.binding,',
-            ' org.apache.cxf.binding.soap,',
-            ' org.apache.cxf.binding.soap.spring,',
-            ' org.apache.cxf.bus,',
-            ' org.apache.cxf.bus.resource,',
-            ' org.apache.cxf.bus.spring,',
-            ' org.apache.cxf.buslifecycle,',
-            ' org.apache.cxf.catalog,',
-            ' org.apache.cxf.configuration.jsse,',
-            ' org.apache.cxf.configuration.spring,',
-            ' org.apache.cxf.endpoint,',
-            ' org.apache.cxf.headers,',
-            ' org.apache.cxf.interceptor,',
-            ' org.apache.cxf.management.jmx,',
-            ' org.apache.cxf.phase,',
-            ' org.apache.cxf.resource,',
-            ' org.apache.cxf.service.factory,',
-            ' org.apache.cxf.service.model,',
-            ' org.apache.cxf.transport,',
-            ' org.apache.cxf.transport.common.gzip,',
-            ' org.apache.cxf.transport.http,',
-            ' org.apache.cxf.transport.http.policy,',
-            ' org.apache.cxf.ws.rm.policy,',
-            ' org.apache.cxf.ws.security.wss4j,',
-            ' org.apache.cxf.wsdl,',
-            ' org.apache.cxf.wsdl11,',
-            ' org.osgi.framework;version=1.3.0,',
-            ' org.osgi.service.blueprint;version="[1.0.0,2.0.0)",',
-            ' org.slf4j;version="1.6",',
-            ' org.springframework.beans.factory.config;version="3.0"',
+            `Bundle-Name: ${flowName}`,
+            `Bundle-SymbolicName: ${symbolicName}; singleton:=true`,
+            'Bundle-Version: 1.0.0',
+            'SAP-BundleType: IntegrationFlow',
+            'SAP-NodeType: IFLMAP',
+            'SAP-RuntimeProfile: iflmap',
+            'Import-Package: com.sap.esb.application.services.cxf.interceptor,com.sap',
+            ' .esb.security,com.sap.it.op.agent.api,com.sap.it.op.agent.collector.cam',
+            ' el,com.sap.it.op.agent.collector.cxf,com.sap.it.op.agent.mpl,javax.jms,',
+            ' javax.jws,javax.wsdl,javax.xml.bind.annotation,javax.xml.namespace,java',
+            ' x.xml.ws,org.apache.camel,org.apache.camel.builder,org.apache.camel.com',
+            ' ponent.cxf,org.apache.camel.model,org.apache.camel.processor,org.apache',
+            ' .camel.processor.aggregate,org.apache.camel.spring.spi,org.apache.commo',
+            ' ns.logging,org.apache.cxf.binding,org.apache.cxf.binding.soap,org.apach',
+            ' e.cxf.binding.soap.spring,org.apache.cxf.bus,org.apache.cxf.bus.resourc',
+            ' e,org.apache.cxf.bus.spring,org.apache.cxf.buslifecycle,org.apache.cxf.',
+            ' catalog,org.apache.cxf.configuration.jsse,org.apache.cxf.configuration.',
+            ' spring,org.apache.cxf.endpoint,org.apache.cxf.headers,org.apache.cxf.in',
+            ' terceptor,org.apache.cxf.management.jmx,org.apache.cxf.phase,org.apache',
+            ' .cxf.resource,org.apache.cxf.service.factory,org.apache.cxf.service.mod',
+            ' el,org.apache.cxf.transport,org.apache.cxf.transport.common.gzip,org.ap',
+            ' ache.cxf.transport.http,org.apache.cxf.transport.http.policy,org.apache',
+            ' .cxf.ws.rm.policy,org.apache.cxf.ws.security.wss4j,org.apache.cxf.wsdl,',
+            ' org.apache.cxf.wsdl11,org.osgi.framework;version=1.3.0,org.osgi.service',
+            ' .blueprint;version="[1.0.0,2.0.0)",org.slf4j;version="1.6",org.springfr',
+            ' amework.beans.factory.config;version="3.0"',
             ''
         ].join('\n');
 
@@ -123,10 +96,11 @@ export class IflowPackager {
     }
 
     private createProject(flowDir: string, flowName: string): void {
+        const projectName = flowName.replace(/\s+/g, '_');
         const project = [
             '<?xml version="1.0" encoding="UTF-8"?>',
             '<projectDescription>',
-            `    <name>${flowName}</name>`,
+            `    <name>${projectName}</name>`,
             '    <comment/>',
             '    <projects/>',
             '    <buildSpec>',
@@ -137,6 +111,8 @@ export class IflowPackager {
             '    </buildSpec>',
             '    <natures>',
             '        <nature>org.eclipse.jdt.core.javanature</nature>',
+            '        <nature>com.sap.ide.ifl.project.support.project.nature</nature>',
+            '        <nature>com.sap.ide.ifl.bsn</nature>',
             '    </natures>',
             '</projectDescription>',
             ''
@@ -147,17 +123,14 @@ export class IflowPackager {
     }
 
     private createMetainfo(flowDir: string, flowName: string): void {
-        const resourcesDir = path.join(flowDir, 'src', 'main', 'resources');
-        fs.mkdirSync(resourcesDir, { recursive: true });
-
         const metainfo = [
             `#Store metainfo properties`,
-            `#${new Date().toISOString()}`,
-            `description=${flowName}`,
+            `#${new Date().toUTCString()}`,
+            `description=`,
             ''
         ].join('\n');
 
-        const metainfoPath = path.join(resourcesDir, 'metainfo.prop');
+        const metainfoPath = path.join(flowDir, 'metainfo.prop');
         fs.writeFileSync(metainfoPath, metainfo, 'utf-8');
     }
 

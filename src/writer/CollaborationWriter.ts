@@ -2,29 +2,7 @@ import { BpmnCollaboration } from "../ir/BpmnCollaboration";
 import { PropertyWriter } from "./PropertyWriter";
 
 /**
- * CollaborationWriter - Writes BPMN <collaboration> element
- *
- * Contains participants (adapters and process) and message flows.
- *
- * Example output:
- *   <collaboration id="Collaboration_1" name="HelloWorld">
- *       <participant id="Participant_Sender" name="Sender">
- *           <extensionElements>
- *               <ifl:property>
- *                   <key>ifl:type</key>
- *                   <value>EndpointSender</value>
- *               </ifl:property>
- *               <ifl:property>
- *                   <key>Address</key>
- *                   <value>/hello</value>
- *               </ifl:property>
- *           </extensionElements>
- *       </participant>
- *       <participant id="Participant_Process" name="Integration Process" processRef="Process_1"/>
- *       <participant id="Participant_Receiver" name="Receiver">...</participant>
- *       <messageFlow id="MessageFlow_1" name="Sender to Process" sourceRef="Participant_Sender" targetRef="StartEvent_1"/>
- *       <messageFlow id="MessageFlow_2" name="Process to Receiver" sourceRef="EndEvent_1" targetRef="Participant_Receiver"/>
- *   </collaboration>
+ * CollaborationWriter - Writes BPMN <bpmn2:collaboration> element
  */
 export class CollaborationWriter {
 
@@ -33,19 +11,20 @@ export class CollaborationWriter {
     write(collaboration: BpmnCollaboration): string {
         const lines: string[] = [];
 
-        lines.push(`<collaboration id="${collaboration.id}" name="${this.escape(collaboration.name)}">`);
+        lines.push(`<bpmn2:collaboration id="${collaboration.id}" name="${this.escape(collaboration.name)}">`);
 
         // Collaboration-level properties
         if (collaboration.properties.length > 0) {
-            lines.push(`    <extensionElements>`);
+            lines.push(`    <bpmn2:extensionElements>`);
             lines.push(this.propertyWriter.writeAll(collaboration.properties, "        "));
-            lines.push(`    </extensionElements>`);
+            lines.push(`    </bpmn2:extensionElements>`);
         }
 
         // Participants
         collaboration.participants.forEach(participant => {
             const attrs: string[] = [
                 `id="${participant.id}"`,
+                `ifl:type="${participant.iflType}"`,
                 `name="${this.escape(participant.name)}"`
             ];
 
@@ -53,24 +32,15 @@ export class CollaborationWriter {
                 attrs.push(`processRef="${participant.processRef}"`);
             }
 
-            if (participant.properties.length === 0) {
-                lines.push(`    <participant ${attrs.join(' ')}/>`);
-            } else {
-                lines.push(`    <participant ${attrs.join(' ')}>`);
-                lines.push(`        <extensionElements>`);
+            lines.push(`    <bpmn2:participant ${attrs.join(' ')}>`);
+            lines.push(`        <bpmn2:extensionElements>`);
 
-                // Add ifl:type property first
-                lines.push(`            <ifl:property>`);
-                lines.push(`                <key>ifl:type</key>`);
-                lines.push(`                <value>${participant.iflType}</value>`);
-                lines.push(`            </ifl:property>`);
-
-                // Add other properties
+            if (participant.properties.length > 0) {
                 lines.push(this.propertyWriter.writeAll(participant.properties, "            "));
-
-                lines.push(`        </extensionElements>`);
-                lines.push(`    </participant>`);
             }
+
+            lines.push(`        </bpmn2:extensionElements>`);
+            lines.push(`    </bpmn2:participant>`);
         });
 
         // Message flows
@@ -83,17 +53,17 @@ export class CollaborationWriter {
             ];
 
             if (messageFlow.properties.length === 0) {
-                lines.push(`    <messageFlow ${attrs.join(' ')}/>`);
+                lines.push(`    <bpmn2:messageFlow ${attrs.join(' ')}/>`);
             } else {
-                lines.push(`    <messageFlow ${attrs.join(' ')}>`);
-                lines.push(`        <extensionElements>`);
+                lines.push(`    <bpmn2:messageFlow ${attrs.join(' ')}>`);
+                lines.push(`        <bpmn2:extensionElements>`);
                 lines.push(this.propertyWriter.writeAll(messageFlow.properties, "            "));
-                lines.push(`        </extensionElements>`);
-                lines.push(`    </messageFlow>`);
+                lines.push(`        </bpmn2:extensionElements>`);
+                lines.push(`    </bpmn2:messageFlow>`);
             }
         });
 
-        lines.push(`</collaboration>`);
+        lines.push(`</bpmn2:collaboration>`);
 
         return lines.join('\n');
     }

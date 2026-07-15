@@ -70,37 +70,46 @@ export class BpmnProcessMapper {
     public map(flow: IFlow): BpmnDefinitions {
 
         const process = new BpmnProcess("Process_1", "Integration Process");
-        const collaboration = new BpmnCollaboration("Collaboration_1", flow.name);
+        const collaboration = new BpmnCollaboration("Collaboration_1", "Default Collaboration");
+
+        // Add collaboration-level properties
+        collaboration.addProperty("namespaceMapping", "");
+        collaboration.addProperty("httpSessionHandling", "None");
+        collaboration.addProperty("accessControlMaxAge", "");
+        collaboration.addProperty("returnExceptionToSender", "false");
+        collaboration.addProperty("log", "All events");
+        collaboration.addProperty("corsEnabled", "false");
+        collaboration.addProperty("exposedHeaders", "");
+        collaboration.addProperty("componentVersion", "1.2");
+        collaboration.addProperty("allowedHeaderList", "");
+        collaboration.addProperty("ServerTrace", "false");
+        collaboration.addProperty("allowedOrigins", "");
+        collaboration.addProperty("accessControlAllowCredentials", "false");
+        collaboration.addProperty("allowedHeaders", "*");
+        collaboration.addProperty("allowedMethods", "GET");
+        collaboration.addProperty("cmdVariantUri", "ctype::IFlowVariant/cname::IFlowConfiguration/version::1.2.4");
+
+        // Add HTTPS sender adapter participant
+        const senderParticipant = new BpmnParticipant(
+            "Participant_1",
+            "Sender",
+            "EndpointSender"
+        );
+        senderParticipant.addProperty("enableBasicAuthentication", "false");
+        senderParticipant.addProperty("ifl:type", "EndpointSender");
+        collaboration.addParticipant(senderParticipant);
 
         // Add process participant
         const processParticipant = new BpmnParticipant(
-            "Participant_Process",
+            "Participant_Process_1",
             "Integration Process",
-            "EndpointProcess",
+            "IntegrationProcess",
             "Process_1"
         );
         collaboration.addParticipant(processParticipant);
 
-        // Add HTTPS sender adapter participant
-        const senderParticipant = new BpmnParticipant(
-            "Participant_Sender",
-            "Sender",
-            "EndpointSender"
-        );
-        senderParticipant.addProperty("Address", "/hello");
-        collaboration.addParticipant(senderParticipant);
-
-        // Add HTTPS receiver adapter participant
-        const receiverParticipant = new BpmnParticipant(
-            "Participant_Receiver",
-            "Receiver",
-            "EndpointReceiver"
-        );
-        receiverParticipant.addProperty("Address", "https://postman-echo.com/post");
-        collaboration.addParticipant(receiverParticipant);
-
         // Add start event
-        const startEvent = new BpmnNode("StartEvent_1", "startEvent", "Start");
+        const startEvent = new BpmnNode("StartEvent_2", "startEvent", "Start");
         process.nodes.push(startEvent);
 
         // Map all components to BPMN nodes
@@ -111,64 +120,71 @@ export class BpmnProcessMapper {
         });
 
         // Add end event
-        const endEvent = new BpmnNode("EndEvent_1", "endEvent", "End");
+        const endEvent = new BpmnNode("EndEvent_2", "endEvent", "End");
         process.nodes.push(endEvent);
 
         // Map connections to sequence flows
         const connections = flow.getConnections();
-        const flowIds: string[] = [];
 
         // Start event to first component
         if (components.length > 0) {
             const firstFlow = new BpmnSequenceFlow(
-                "SequenceFlow_1",
-                "StartEvent_1",
+                "SequenceFlow_3",
+                "StartEvent_2",
                 components[0].id
             );
             process.flows.push(firstFlow);
-            flowIds.push(firstFlow.id);
         }
 
         // Component connections
         connections.forEach((connection, index) => {
             const seqFlow = new BpmnSequenceFlow(
-                `SequenceFlow_${index + 2}`,
+                `SequenceFlow_${index + 4}`,
                 connection.from.id,
                 connection.to.id
             );
             process.flows.push(seqFlow);
-            flowIds.push(seqFlow.id);
         });
 
         // Last component to end event
         if (components.length > 0) {
             const lastComponent = components[components.length - 1];
             const lastFlow = new BpmnSequenceFlow(
-                `SequenceFlow_${connections.length + 2}`,
+                `SequenceFlow_${connections.length + 4}`,
                 lastComponent.id,
-                "EndEvent_1"
+                "EndEvent_2"
             );
             process.flows.push(lastFlow);
-            flowIds.push(lastFlow.id);
         }
 
-        // Message flow from sender to start event
+        // Message flow from sender to start event with HTTPS adapter properties
         const senderMessageFlow = new BpmnMessageFlow(
-            "MessageFlow_1",
-            "Sender to Process",
-            "Participant_Sender",
-            "StartEvent_1"
+            "MessageFlow_4",
+            "HTTPS",
+            "Participant_1",
+            "StartEvent_2"
         );
+        senderMessageFlow.addProperty("ComponentType", "HTTPS");
+        senderMessageFlow.addProperty("Description", "");
+        senderMessageFlow.addProperty("maximumBodySize", "40");
+        senderMessageFlow.addProperty("ComponentNS", "sap");
+        senderMessageFlow.addProperty("componentVersion", "1.5");
+        senderMessageFlow.addProperty("urlPath", "/hello");
+        senderMessageFlow.addProperty("Name", "HTTPS");
+        senderMessageFlow.addProperty("TransportProtocolVersion", "1.5.2");
+        senderMessageFlow.addProperty("ComponentSWCVName", "external");
+        senderMessageFlow.addProperty("system", "Sender");
+        senderMessageFlow.addProperty("xsrfProtection", "1");
+        senderMessageFlow.addProperty("TransportProtocol", "HTTPS");
+        senderMessageFlow.addProperty("cmdVariantUri", "ctype::AdapterVariant/cname::sap:HTTPS/tp::HTTPS/mp::None/direction::Sender/version::1.5.2");
+        senderMessageFlow.addProperty("userRole", "ESBMessaging.send");
+        senderMessageFlow.addProperty("senderAuthType", "RoleBased");
+        senderMessageFlow.addProperty("MessageProtocol", "None");
+        senderMessageFlow.addProperty("MessageProtocolVersion", "1.5.2");
+        senderMessageFlow.addProperty("ComponentSWCVId", "1.5.2");
+        senderMessageFlow.addProperty("direction", "Sender");
+        senderMessageFlow.addProperty("clientCertificates", "");
         collaboration.addMessageFlow(senderMessageFlow);
-
-        // Message flow from end event to receiver
-        const receiverMessageFlow = new BpmnMessageFlow(
-            "MessageFlow_2",
-            "Process to Receiver",
-            "EndEvent_1",
-            "Participant_Receiver"
-        );
-        collaboration.addMessageFlow(receiverMessageFlow);
 
         return new BpmnDefinitions("Definitions_1", collaboration, process);
     }

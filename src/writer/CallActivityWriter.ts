@@ -2,29 +2,7 @@ import { BpmnNode } from "../ir/BpmnNode";
 import { PropertyWriter } from "./PropertyWriter";
 
 /**
- * CallActivityWriter - Generates BPMN <callActivity> XML
- *
- * In CPI, most integration steps are represented as <callActivity>:
- * - Content Modifier (activityType="Enricher")
- * - Router (activityType="Router")
- * - Groovy Script (activityType="ScriptCollection")
- * - Data Store (activityType="DataStoreWrite")
- *
- * Example output:
- *   <callActivity id="CallActivity_1" name="Set Body">
- *       <incoming>SequenceFlow_1</incoming>
- *       <outgoing>SequenceFlow_2</outgoing>
- *       <extensionElements>
- *           <ifl:property>
- *               <key>activityType</key>
- *               <value>Enricher</value>
- *           </ifl:property>
- *           <ifl:property>
- *               <key>bodyType</key>
- *               <value>constant</value>
- *           </ifl:property>
- *       </extensionElements>
- *   </callActivity>
+ * CallActivityWriter - Generates BPMN <bpmn2:callActivity> XML
  */
 export class CallActivityWriter {
 
@@ -37,23 +15,37 @@ export class CallActivityWriter {
     ): string {
         const lines: string[] = [];
 
-        lines.push(`<callActivity id="${node.id}" name="${this.escape(node.name)}">`);
+        lines.push(`<bpmn2:callActivity id="${node.id}" name="${this.escape(node.name)}">`);
+
+        lines.push(`    <bpmn2:extensionElements>`);
+        if (node.iflProperties.length > 0) {
+            lines.push(this.propertyWriter.writeAll(node.iflProperties, "        "));
+        } else {
+            // Add default properties for Content Modifier
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>componentVersion</key>`);
+            lines.push(`            <value>1.6</value>`);
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>activityType</key>`);
+            lines.push(`            <value>Enricher</value>`);
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>cmdVariantUri</key>`);
+            lines.push(`            <value>ctype::FlowstepVariant/cname::Enricher/version::1.6.3</value>`);
+            lines.push(`        </ifl:property>`);
+        }
+        lines.push(`    </bpmn2:extensionElements>`);
 
         incoming.forEach(flowId => {
-            lines.push(`    <incoming>${flowId}</incoming>`);
+            lines.push(`    <bpmn2:incoming>${flowId}</bpmn2:incoming>`);
         });
 
         outgoing.forEach(flowId => {
-            lines.push(`    <outgoing>${flowId}</outgoing>`);
+            lines.push(`    <bpmn2:outgoing>${flowId}</bpmn2:outgoing>`);
         });
 
-        if (node.iflProperties.length > 0) {
-            lines.push(`    <extensionElements>`);
-            lines.push(this.propertyWriter.writeAll(node.iflProperties, "        "));
-            lines.push(`    </extensionElements>`);
-        }
-
-        lines.push(`</callActivity>`);
+        lines.push(`</bpmn2:callActivity>`);
 
         return lines.join('\n');
     }

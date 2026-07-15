@@ -6,19 +6,7 @@ import { EventWriter } from "./EventWriter";
 import { CallActivityWriter } from "./CallActivityWriter";
 
 /**
- * ProcessWriter - Writes BPMN <process> element
- *
- * Contains all nodes (events, activities) and sequence flows.
- *
- * Example output:
- *   <process id="Process_1" name="Integration Process">
- *       <extensionElements>...</extensionElements>
- *       <startEvent id="StartEvent_1" name="Start">...</startEvent>
- *       <callActivity id="CallActivity_1" name="Set Body">...</callActivity>
- *       <endEvent id="EndEvent_1" name="End">...</endEvent>
- *       <sequenceFlow id="SequenceFlow_1" sourceRef="StartEvent_1" targetRef="CallActivity_1"/>
- *       <sequenceFlow id="SequenceFlow_2" sourceRef="CallActivity_1" targetRef="EndEvent_1"/>
- *   </process>
+ * ProcessWriter - Writes BPMN <bpmn2:process> element
  */
 export class ProcessWriter {
 
@@ -29,14 +17,32 @@ export class ProcessWriter {
     write(process: BpmnProcess): string {
         const lines: string[] = [];
 
-        lines.push(`<process id="${process.id}" name="${this.escape(process.name)}" isExecutable="false">`);
+        lines.push(`<bpmn2:process id="${process.id}" name="${this.escape(process.name)}">`);
 
         // Extension elements (process-level properties)
+        lines.push(`    <bpmn2:extensionElements>`);
         if (process.properties.length > 0) {
-            lines.push(`    <extensionElements>`);
             lines.push(this.propertyWriter.writeAll(process.properties, "        "));
-            lines.push(`    </extensionElements>`);
+        } else {
+            // Add default process properties
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>transactionTimeout</key>`);
+            lines.push(`            <value>30</value>`);
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>componentVersion</key>`);
+            lines.push(`            <value>1.2</value>`);
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>cmdVariantUri</key>`);
+            lines.push(`            <value>ctype::FlowElementVariant/cname::IntegrationProcess/version::1.2.1</value>`);
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>transactionalHandling</key>`);
+            lines.push(`            <value>Not Required</value>`);
+            lines.push(`        </ifl:property>`);
         }
+        lines.push(`    </bpmn2:extensionElements>`);
 
         // Build incoming/outgoing maps
         const incoming = new Map<string, string[]>();
@@ -77,13 +83,13 @@ export class ProcessWriter {
             lines.push(this.writeSequenceFlow(flow));
         });
 
-        lines.push(`</process>`);
+        lines.push(`</bpmn2:process>`);
 
         return lines.join('\n');
     }
 
     private writeSequenceFlow(flow: BpmnSequenceFlow): string {
-        return `    <sequenceFlow id="${flow.id}" sourceRef="${flow.sourceRef}" targetRef="${flow.targetRef}"/>`;
+        return `    <bpmn2:sequenceFlow id="${flow.id}" sourceRef="${flow.sourceRef}" targetRef="${flow.targetRef}"/>`;
     }
 
     private indent(text: string, indentStr: string): string {

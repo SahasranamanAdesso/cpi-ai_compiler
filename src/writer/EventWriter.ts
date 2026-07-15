@@ -1,16 +1,7 @@
 import { BpmnNode } from "../ir/BpmnNode";
 
 /**
- * EventWriter - Writes BPMN events (start, end)
- *
- * Example output:
- *   <startEvent id="StartEvent_1" name="Start">
- *       <outgoing>SequenceFlow_1</outgoing>
- *   </startEvent>
- *
- *   <endEvent id="EndEvent_1" name="End">
- *       <incoming>SequenceFlow_3</incoming>
- *   </endEvent>
+ * EventWriter - Writes BPMN events (start, end) with bpmn2 prefix
  */
 export class EventWriter {
 
@@ -21,17 +12,50 @@ export class EventWriter {
     ): string {
         const lines: string[] = [];
 
-        lines.push(`<${node.type} id="${node.id}" name="${this.escape(node.name)}">`);
+        lines.push(`<bpmn2:${node.type} id="${node.id}" name="${this.escape(node.name)}">`);
+
+        // Extension elements with properties
+        lines.push(`    <bpmn2:extensionElements>`);
+        if (node.iflProperties.length > 0) {
+            node.iflProperties.forEach(prop => {
+                lines.push(`        <ifl:property>`);
+                lines.push(`            <key>${this.escape(prop.key)}</key>`);
+                lines.push(`            <value>${this.escape(prop.value)}</value>`);
+                lines.push(`        </ifl:property>`);
+            });
+        } else {
+            // Add default componentVersion and cmdVariantUri
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>componentVersion</key>`);
+            if (node.type === "startEvent") {
+                lines.push(`            <value>1.0</value>`);
+            } else {
+                lines.push(`            <value>1.1</value>`);
+            }
+            lines.push(`        </ifl:property>`);
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>cmdVariantUri</key>`);
+            if (node.type === "startEvent") {
+                lines.push(`            <value>ctype::FlowstepVariant/cname::MessageStartEvent/version::1.0</value>`);
+            } else {
+                lines.push(`            <value>ctype::FlowstepVariant/cname::MessageEndEvent/version::1.1.0</value>`);
+            }
+            lines.push(`        </ifl:property>`);
+        }
+        lines.push(`    </bpmn2:extensionElements>`);
 
         incoming.forEach(flowId => {
-            lines.push(`    <incoming>${flowId}</incoming>`);
+            lines.push(`    <bpmn2:incoming>${flowId}</bpmn2:incoming>`);
         });
 
         outgoing.forEach(flowId => {
-            lines.push(`    <outgoing>${flowId}</outgoing>`);
+            lines.push(`    <bpmn2:outgoing>${flowId}</bpmn2:outgoing>`);
         });
 
-        lines.push(`</${node.type}>`);
+        // Add messageEventDefinition for start/end events
+        lines.push(`    <bpmn2:messageEventDefinition/>`);
+
+        lines.push(`</bpmn2:${node.type}>`);
 
         return lines.join('\n');
     }
