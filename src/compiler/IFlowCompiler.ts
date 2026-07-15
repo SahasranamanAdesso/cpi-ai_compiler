@@ -1,5 +1,6 @@
 import { IFlow } from "../model/IFlow";
 import { BpmnProcess } from "../ir/BpmnProcess";
+import { BpmnNode } from "../ir/BpmnNode";
 
 /**
  * IFlowCompiler - Compiles IFlow (SDK model) to BpmnProcess (IR)
@@ -42,15 +43,7 @@ import { BpmnProcess } from "../ir/BpmnProcess";
  *
  *   console.log(bpmnProcess.nodes);
  *   // [
- *   //   BpmnNode("StartEvent_1", "startEvent", "Start"),
- *   //   BpmnNode("CMP_1", "callActivity", "Set Headers", {...}),
- *   //   BpmnNode("EndEvent_1", "endEvent", "End")
- *   // ]
- *
- *   console.log(bpmnProcess.flows);
- *   // [
- *   //   BpmnSequenceFlow("StartEvent_1", "CMP_1"),
- *   //   BpmnSequenceFlow("CMP_1", "EndEvent_1")
+ *   //   BpmnNode("CMP_1", "Enricher", "Set Headers", {...})
  *   // ]
  */
 export class IFlowCompiler {
@@ -62,7 +55,7 @@ export class IFlowCompiler {
      * high-level SDK model into BPMN Intermediate Representation.
      *
      * The compiled BpmnProcess contains:
-     * - All BPMN nodes (start event, components as BPMN elements, end event)
+     * - All BPMN nodes (components transformed to BPMN elements)
      * - All sequence flows connecting the nodes
      *
      * @param flow - The IFlow to compile
@@ -70,6 +63,7 @@ export class IFlowCompiler {
      *
      * @example
      * const flow = new IFlow("Test");
+     * flow.addComponent(new Component("CMP_1", "Content Modifier", "Enricher"));
      * const compiler = new IFlowCompiler();
      * const process = compiler.compile(flow);
      */
@@ -77,8 +71,17 @@ export class IFlowCompiler {
 
         const process = new BpmnProcess();
 
-        // We'll populate this in the next step
-        // For now, just return an empty process
+        // Transform each Component into a BpmnNode
+        for (const component of flow.getComponents()) {
+            process.nodes.push(
+                new BpmnNode(
+                    component.id,
+                    component.componentType,
+                    component.name,
+                    component.properties
+                )
+            );
+        }
 
         return process;
     }
