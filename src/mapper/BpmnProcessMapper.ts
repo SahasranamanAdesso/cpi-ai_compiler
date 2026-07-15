@@ -68,7 +68,7 @@ export class BpmnProcessMapper {
      */
     public map(flow: IFlow): BpmnProcess {
 
-        const process = new BpmnProcess();
+        const process = new BpmnProcess("Process_1", "Integration Process");
 
         // Map all components to BPMN nodes
         const components = flow.getComponents();
@@ -81,9 +81,10 @@ export class BpmnProcessMapper {
 
         // Map connections to sequence flows
         const connections = flow.getConnections();
-        connections.forEach(connection => {
+        connections.forEach((connection, index) => {
             process.flows.push(
                 new BpmnSequenceFlow(
+                    `SequenceFlow_${index + 1}`,
                     connection.from.id,
                     connection.to.id
                 )

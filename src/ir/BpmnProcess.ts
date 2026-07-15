@@ -1,5 +1,6 @@
 import { BpmnNode } from "./BpmnNode";
 import { BpmnSequenceFlow } from "./BpmnSequenceFlow";
+import { IflProperty } from "./IflProperty";
 
 /**
  * BpmnProcess - Intermediate Representation of a complete BPMN process
@@ -54,15 +55,16 @@ import { BpmnSequenceFlow } from "./BpmnSequenceFlow";
  *   </process>
  */
 export class BpmnProcess {
-
-    /**
-     * All BPMN nodes in this process
-     */
     public readonly nodes: BpmnNode[] = [];
-
-    /**
-     * All sequence flows connecting the nodes
-     */
     public readonly flows: BpmnSequenceFlow[] = [];
+    public readonly properties: IflProperty[] = [];
 
+    constructor(
+        public readonly id: string,
+        public readonly name: string
+    ) {}
+
+    addProperty(key: string, value: string): void {
+        this.properties.push(new IflProperty(key, value));
+    }
 }

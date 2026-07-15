@@ -71,7 +71,7 @@ export class IFlowCompiler {
      */
     compile(flow: IFlow): BpmnProcess {
 
-        const process = new BpmnProcess();
+        const process = new BpmnProcess("Process_1", "Integration Process");
 
         // Transform each Component into a BpmnNode using Registry
         for (const component of flow.getComponents()) {

@@ -15,10 +15,9 @@
  * This creates a flow from the start event to a content modifier.
  */
 export class BpmnSequenceFlow {
-
     constructor(
+        public readonly id: string,
         public readonly sourceRef: string,
         public readonly targetRef: string
     ) {}
-
 }

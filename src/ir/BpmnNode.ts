@@ -1,3 +1,5 @@
+import { IflProperty } from "./IflProperty";
+
 /**
  * BpmnNode - Intermediate Representation of a BPMN element
  *
@@ -27,6 +29,7 @@
  *   })
  */
 export class BpmnNode {
+    public readonly iflProperties: IflProperty[] = [];
 
     constructor(
         public readonly id: string,
@@ -35,4 +38,7 @@ export class BpmnNode {
         public readonly properties: Record<string, any> = {}
     ) {}
 
+    addProperty(key: string, value: string): void {
+        this.iflProperties.push(new IflProperty(key, value));
+    }
 }
