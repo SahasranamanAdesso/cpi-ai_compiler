@@ -7,6 +7,7 @@
   "scripts": {
     "build": "tsc",
     "helloworld": "ts-node examples/helloworld.ts",
+    "ai-demo": "ts-node examples/ai-generation.ts",
     "clean": "rimraf dist",
     "prepublish": "npm run build"
   },
@@ -33,6 +34,7 @@
   "dependencies": {
     "@types/archiver": "^8.0.0",
     "archiver": "^8.0.0",
+    "dotenv": "^16.6.1",
     "fast-xml-parser": "^4.5.0",
     "jszip": "^3.10.1",
     "xmlbuilder2": "^3.1.1"
