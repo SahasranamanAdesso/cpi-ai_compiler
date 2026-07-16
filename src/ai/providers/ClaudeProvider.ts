@@ -1,4 +1,5 @@
 import { AIProvider } from '../AIProvider';
+import { AIProviderResponse } from '../AIProviderResponse';
 
 /**
  * ClaudeProvider - Anthropic Claude API implementation of AIProvider
@@ -11,7 +12,7 @@ import { AIProvider } from '../AIProvider';
  * - Return raw response text
  *
  * Non-Responsibilities:
- * - Validation (SDKValidator handles this)
+ * - Validation (FlowValidator handles this)
  * - Compilation (Compiler handles this)
  * - XML/BPMN generation (Compiler handles this)
  * - Prompt building (PromptBuilder handles this)
@@ -48,16 +49,16 @@ export class ClaudeProvider implements AIProvider {
     /**
      * Generates TypeScript code using Claude
      *
-     * Sends the prompt to Claude and returns the generated code.
+     * Sends the prompt to Claude and returns the generated code with metadata.
      * Uses Claude 3.5 Sonnet with:
      * - Max tokens: 4096
      * - Temperature: 0 (deterministic)
      *
      * @param prompt - The complete system + user prompt
-     * @returns Raw TypeScript code from Claude
+     * @returns Response with generated code and token usage
      * @throws Error if API call fails or returns unexpected format
      */
-    async generate(prompt: string): Promise<string> {
+    async generate(prompt: string): Promise<AIProviderResponse> {
         try {
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
@@ -98,7 +99,14 @@ export class ClaudeProvider implements AIProvider {
                 throw new Error('No text content in Claude API response');
             }
 
-            return textContent.text;
+            // Return response with metadata
+            return {
+                content: textContent.text,
+                provider: 'Claude',
+                model: this.model,
+                promptTokens: data.usage?.input_tokens,
+                completionTokens: data.usage?.output_tokens
+            };
 
         } catch (error) {
             if (error instanceof Error) {

@@ -19,7 +19,7 @@ Natural Language Request
     AIProvider
   (Send to LLM)
         ↓
-   SDKValidator
+   FlowValidator
   (Validate TypeScript)
         ↓
 Generated TypeScript Code
@@ -74,7 +74,7 @@ export interface AIProvider {
 - Return raw response
 
 **Non-Responsibility:**
-- Validation (SDKValidator handles this)
+- Validation (FlowValidator handles this)
 - Compilation (Compiler handles this)
 - Prompt building (PromptBuilder handles this)
 
@@ -126,10 +126,10 @@ export class PromptBuilder {
 
 ---
 
-### 4. SDKValidator
+### 4. FlowValidator
 
 ```typescript
-export class SDKValidator {
+export class FlowValidator {
     validate(code: string): ValidationResult
 }
 ```
@@ -159,7 +159,7 @@ export class SDKValidator {
 
 ```typescript
 export class AIPipeline {
-    constructor(provider: AIProvider, promptBuilder?: PromptBuilder, validator?: SDKValidator)
+    constructor(provider: AIProvider, promptBuilder?: PromptBuilder, validator?: FlowValidator)
     async generate(userRequest: string): Promise<GenerationResult>
     async generateWithRetry(userRequest: string, maxRetries?: number): Promise<GenerationResult>
 }
@@ -332,7 +332,7 @@ export default flow;
 ### Separation of Concerns
 - **PromptBuilder** - Knows how to build prompts
 - **AIProvider** - Knows how to call LLMs
-- **SDKValidator** - Knows SDK structure
+- **FlowValidator** - Knows SDK structure
 - **AIPipeline** - Orchestrates workflow
 
 ### Dependency Injection
@@ -381,9 +381,9 @@ npm run ai-demo
 
 ### Unit Testing (Future)
 ```typescript
-describe('SDKValidator', () => {
+describe('FlowValidator', () => {
     it('should validate correct code', () => {
-        const validator = new SDKValidator();
+        const validator = new FlowValidator();
         const result = validator.validate(validCode);
         expect(result.isValid).toBe(true);
     });

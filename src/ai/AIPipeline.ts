@@ -1,6 +1,7 @@
 import { AIProvider } from './AIProvider';
 import { PromptBuilder } from './PromptBuilder';
-import { SDKValidator, ValidationResult } from './SDKValidator';
+import { FlowValidator, ValidationResult } from './FlowValidator';
+import { GenerationResult } from './GenerationResult';
 
 /**
  * AIPipeline - Orchestrates AI-powered Integration Flow code generation
@@ -8,7 +9,7 @@ import { SDKValidator, ValidationResult } from './SDKValidator';
  * This class is the main entry point for Version 1.1 AI functionality.
  * It coordinates the workflow:
  *
- *   Natural Language → PromptBuilder → AIProvider → SDKValidator → TypeScript
+ *   Natural Language → PromptBuilder → AIProvider → FlowValidator → TypeScript
  *
  * Responsibilities:
  * 1. Build prompt from user request
@@ -36,7 +37,7 @@ export class AIPipeline {
 
     private readonly provider: AIProvider;
     private readonly promptBuilder: PromptBuilder;
-    private readonly validator: SDKValidator;
+    private readonly validator: FlowValidator;
 
     /**
      * Creates a new AIPipeline
@@ -59,11 +60,11 @@ export class AIPipeline {
     constructor(
         provider: AIProvider,
         promptBuilder?: PromptBuilder,
-        validator?: SDKValidator
+        validator?: FlowValidator
     ) {
         this.provider = provider;
         this.promptBuilder = promptBuilder || new PromptBuilder();
-        this.validator = validator || new SDKValidator();
+        this.validator = validator || new FlowValidator();
     }
 
     /**
@@ -97,41 +98,56 @@ export class AIPipeline {
      * }
      */
     async generate(userRequest: string): Promise<GenerationResult> {
+        const startTime = Date.now();
+
         try {
             // Step 1: Build prompt
             const prompt = this.promptBuilder.build(userRequest);
 
             // Step 2: Generate code using AI provider
-            let generatedCode: string;
+            let providerResponse;
             try {
-                generatedCode = await this.provider.generate(prompt);
+                providerResponse = await this.provider.generate(prompt);
             } catch (error) {
                 return {
                     success: false,
                     code: '',
                     errors: [
                         `AI provider failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                    ]
+                    ],
+                    provider: 'Unknown',
+                    model: 'Unknown',
+                    elapsedMs: Date.now() - startTime
                 };
             }
 
             // Step 3: Validate generated code
-            const validationResult = this.validator.validate(generatedCode);
+            const validationResult = this.validator.validate(providerResponse.content);
 
             if (!validationResult.isValid) {
                 return {
                     success: false,
-                    code: generatedCode,
+                    code: providerResponse.content,
                     errors: validationResult.errors,
+                    provider: providerResponse.provider,
+                    model: providerResponse.model,
+                    promptTokens: providerResponse.promptTokens,
+                    completionTokens: providerResponse.completionTokens,
+                    elapsedMs: Date.now() - startTime,
                     validationResult
                 };
             }
 
-            // Step 4: Return validated code
+            // Step 4: Return validated code with metadata
             return {
                 success: true,
-                code: generatedCode,
+                code: providerResponse.content,
                 errors: [],
+                provider: providerResponse.provider,
+                model: providerResponse.model,
+                promptTokens: providerResponse.promptTokens,
+                completionTokens: providerResponse.completionTokens,
+                elapsedMs: Date.now() - startTime,
                 validationResult
             };
 
@@ -141,7 +157,10 @@ export class AIPipeline {
                 code: '',
                 errors: [
                     `Pipeline failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-                ]
+                ],
+                provider: 'Unknown',
+                model: 'Unknown',
+                elapsedMs: Date.now() - startTime
             };
         }
     }
@@ -184,21 +203,4 @@ export class AIPipeline {
 
         return lastResult!;
     }
-}
-
-/**
- * Result of AI code generation
- */
-export interface GenerationResult {
-    /** Whether generation and validation succeeded */
-    success: boolean;
-
-    /** Generated TypeScript code (may be invalid if success is false) */
-    code: string;
-
-    /** List of errors (empty if success is true) */
-    errors: string[];
-
-    /** Detailed validation result (if validation was performed) */
-    validationResult?: ValidationResult;
 }
