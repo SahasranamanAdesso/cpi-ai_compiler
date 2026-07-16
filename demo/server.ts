@@ -11,6 +11,7 @@ import fs from 'fs';
 import { IntegrationFlowGenerator } from '../src/ai/IntegrationFlowGenerator';
 import { AIPipeline } from '../src/ai/AIPipeline';
 import { ClaudeProvider } from '../src/ai/providers/ClaudeProvider';
+import { AdessoAIHubProvider } from '../src/ai/providers/AdessoAIHubProvider';
 import * as dotenv from 'dotenv';
 
 // Load environment variables
@@ -23,19 +24,54 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Validate API key on startup
-const apiKey = process.env.ANTHROPIC_API_KEY;
-if (!apiKey) {
-    console.error('❌ Error: ANTHROPIC_API_KEY environment variable not set');
-    console.log('\nTo run the demo:');
-    console.log('1. Create a .env file in the project root');
-    console.log('2. Add: ANTHROPIC_API_KEY=your_api_key_here');
-    console.log('3. Run: npm run demo\n');
-    process.exit(1);
+// Determine which provider to use
+const useAdessoAIHub = process.env.USE_ADESSO_AI_HUB === 'true';
+
+let provider;
+let providerName: string;
+
+if (useAdessoAIHub) {
+    // Use adesso AI Hub
+    const apiKey = process.env.ADESSO_AI_HUB_API_KEY;
+    const apiUrl = process.env.ADESSO_AI_HUB_URL;
+    const model = process.env.ADESSO_AI_HUB_MODEL;
+
+    if (!apiKey || !apiUrl) {
+        console.error('❌ Error: adesso AI Hub configuration incomplete');
+        console.log('\nTo use adesso AI Hub:');
+        console.log('1. Create a .env file in the project root');
+        console.log('2. Add the following:');
+        console.log('   USE_ADESSO_AI_HUB=true');
+        console.log('   ADESSO_AI_HUB_API_KEY=your_api_key_here');
+        console.log('   ADESSO_AI_HUB_URL=https://your-ai-hub-url/v1/messages');
+        console.log('   ADESSO_AI_HUB_MODEL=claude-3-5-sonnet-20241022  # optional');
+        console.log('3. Run: npm run demo\n');
+        process.exit(1);
+    }
+
+    provider = new AdessoAIHubProvider(apiKey, apiUrl, model);
+    providerName = 'adesso AI Hub';
+} else {
+    // Use Claude directly
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+        console.error('❌ Error: ANTHROPIC_API_KEY environment variable not set');
+        console.log('\nTo run the demo:');
+        console.log('1. Create a .env file in the project root');
+        console.log('2. Add: ANTHROPIC_API_KEY=your_api_key_here');
+        console.log('3. Run: npm run demo\n');
+        console.log('\nOr to use adesso AI Hub:');
+        console.log('   USE_ADESSO_AI_HUB=true');
+        console.log('   ADESSO_AI_HUB_API_KEY=your_key');
+        console.log('   ADESSO_AI_HUB_URL=your_url\n');
+        process.exit(1);
+    }
+
+    provider = new ClaudeProvider(apiKey);
+    providerName = 'Claude API';
 }
 
 // Create AI pipeline and generator
-const provider = new ClaudeProvider(apiKey);
 const pipeline = new AIPipeline(provider);
 const generator = new IntegrationFlowGenerator(pipeline);
 
@@ -156,7 +192,7 @@ app.listen(PORT, () => {
     console.log('🚀 SAP AI Integration Compiler - Demo Server');
     console.log('═══════════════════════════════════════════════════════════════');
     console.log(`\n   Server running at: http://localhost:${PORT}`);
-    console.log(`   API Key configured: ✅`);
+    console.log(`   AI Provider: ${providerName} ✅`);
     console.log('\n   Open your browser to http://localhost:' + PORT);
     console.log('\n═══════════════════════════════════════════════════════════════\n');
 });
