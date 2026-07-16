@@ -8,6 +8,7 @@
     "build": "tsc",
     "helloworld": "ts-node examples/helloworld.ts",
     "ai-demo": "ts-node examples/ai-generation.ts",
+    "e2e-demo": "ts-node examples/end-to-end.ts",
     "clean": "rimraf dist",
     "prepublish": "npm run build"
   },
