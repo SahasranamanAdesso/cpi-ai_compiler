@@ -1,88 +1,68 @@
-import { IFlowDefinition } from "./domain/IFlowDefinition";
-import { IFlow } from "./model/IFlow";
-import { Component } from "./model/Component";
+/**
+ * SAP Integration SDK - TypeScript SDK for SAP Cloud Integration
+ *
+ * This SDK allows you to programmatically generate SAP Cloud Integration (CPI)
+ * Integration Flows using TypeScript instead of manual graphical configuration.
+ *
+ * @packageDocumentation
+ */
 
-console.log("=== Step 10: Generic Component Model (Metadata-Driven) ===\n");
+// ============================================================================
+// PUBLIC API - Model Layer
+// ============================================================================
 
-// Domain Layer - What developers write
-console.log("1️⃣ Domain Layer (Developer API):\n");
+/**
+ * Core model classes for building Integration Flows
+ */
+export { IFlow } from './model/IFlow';
+export { Component } from './model/Component';
+export { Connection } from './model/Connection';
 
-const flowDef = new IFlowDefinition("SalesOrderSync")
-    .sender("HTTPS")
-    .contentModifier({
-        headers: {
-            Country: "IN",
-            CurrentDate: "${date:now:yyyy-MM-dd}"
-        }
-    })
-    .receiver("HTTPS");
+// ============================================================================
+// PUBLIC API - Mapper Layer
+// ============================================================================
 
-console.log("✅ Developer writes clean, CPI-native code");
-console.log(`   Flow: ${flowDef.name}`);
-console.log(`   Sender: ${flowDef.getSender()?.adapter}`);
-console.log(`   Steps: ${flowDef.getProcess().getSteps().length}`);
-console.log(`   Receiver: ${flowDef.getReceiver()?.adapter}`);
+/**
+ * Mapper that transforms IFlow model to BPMN IR
+ */
+export { BpmnProcessMapper } from './mapper/BpmnProcessMapper';
+export { ComponentMapper } from './mapper/ComponentMapper';
 
-// Compiler Layer - Internal Representation
-console.log("\n2️⃣ Compiler Layer (Internal Representation):\n");
+// ============================================================================
+// PUBLIC API - IR Layer
+// ============================================================================
 
-const ir = new IFlow("SalesOrderSync");
+/**
+ * BPMN Intermediate Representation classes
+ */
+export { BpmnDefinitions } from './ir/BpmnDefinitions';
+export { BpmnCollaboration } from './ir/BpmnCollaboration';
+export { BpmnProcess } from './ir/BpmnProcess';
+export { BpmnNode } from './ir/BpmnNode';
+export { BpmnParticipant } from './ir/BpmnParticipant';
+export { BpmnMessageFlow } from './ir/BpmnMessageFlow';
+export { BpmnSequenceFlow } from './ir/BpmnSequenceFlow';
+export { BpmnDiagram } from './ir/BpmnDiagram';
+export { BpmnShape } from './ir/BpmnShape';
+export { BpmnEdge } from './ir/BpmnEdge';
+export { IflProperty } from './ir/IflProperty';
 
-// Content Modifier as generic component
-const contentModifier = new Component(
-    "CMP_1",
-    "Set Country Header",
-    "Enricher",
-    {
-        headers: {
-            Country: "IN",
-            CurrentDate: "${date:now:yyyy-MM-dd}"
-        }
-    }
-);
+// ============================================================================
+// PUBLIC API - Serialization Layer
+// ============================================================================
 
-// Router as generic component
-const router = new Component(
-    "CMP_2",
-    "Route by Country",
-    "Router",
-    {
-        condition: "${header.Country} == 'IN'"
-    }
-);
+/**
+ * Serializers and packagers for generating .iflw artifacts
+ */
+export { IflowSerializer } from './serializer/IflowSerializer';
+export { IflowPackager } from './packager/IflowPackager';
 
-// Groovy Script as generic component
-const groovy = new Component(
-    "CMP_3",
-    "Transform Data",
-    "GroovyScript",
-    {
-        script: "transform.groovy"
-    }
-);
+// ============================================================================
+// PUBLIC API - Registry Layer
+// ============================================================================
 
-ir.addComponent(contentModifier)
-  .addComponent(router)
-  .addComponent(groovy)
-  .connect(contentModifier, router)
-  .connect(router, groovy);
-
-console.log("✅ Compiler uses generic Component metadata:");
-console.log(`   Total Components: ${ir.getComponents().length}`);
-console.log(`   Total Connections: ${ir.getConnections().length}\n`);
-
-ir.getComponents().forEach((comp, i) => {
-    console.log(`   Component ${i + 1}:`);
-    console.log(`     ID: ${comp.id}`);
-    console.log(`     Name: ${comp.name}`);
-    console.log(`     Type: ${comp.componentType}`);
-    console.log(`     Props: ${JSON.stringify(comp.properties, null, 6)}\n`);
-});
-
-console.log("🎯 Key Insight:");
-console.log("   ONE Component class handles ALL CPI element types!");
-console.log("   - Content Modifier → componentType: 'Enricher'");
-console.log("   - Router → componentType: 'Router'");
-console.log("   - Groovy → componentType: 'GroovyScript'");
-console.log("\n   Future-proof: New SAP adapters = just new componentType values");
-console.log("\n🚀 Next: Generate BPMN <callActivity> from Component metadata");
+/**
+ * Component registry for SAP CPI component metadata
+ */
+export { Registry } from './registry/Registry';
+export { ComponentRegistry } from './registry/ComponentRegistry';

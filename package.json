@@ -1,24 +1,34 @@
 {
   "name": "sap-integration-sdk",
   "version": "1.0.0",
-  "description": "TypeScript SDK for building SAP Cloud Integration (CPI) iFlows programmatically",
+  "description": "TypeScript SDK for building SAP Cloud Integration (CPI) Integration Flows programmatically",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "start": "ts-node src/index.ts",
-    "dev": "ts-node src/index.ts",
     "helloworld": "ts-node examples/helloworld.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "clean": "rimraf dist",
+    "prepublish": "npm run build"
   },
   "keywords": [
     "sap",
     "cpi",
     "integration",
     "iflow",
-    "bpmn"
+    "bpmn",
+    "integration-suite",
+    "cloud-integration",
+    "compiler",
+    "code-generation"
   ],
-  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SahasranamanAdesso/cpi-ai_compiler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SahasranamanAdesso/cpi-ai_compiler/issues"
+  },
+  "author": "Sahasranaman Adesso",
   "license": "MIT",
   "dependencies": {
     "@types/archiver": "^8.0.0",
