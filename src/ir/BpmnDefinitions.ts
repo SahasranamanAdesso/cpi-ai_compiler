@@ -1,11 +1,13 @@
 import { BpmnCollaboration } from "./BpmnCollaboration";
 import { BpmnProcess } from "./BpmnProcess";
+import { BpmnDiagram } from "./BpmnDiagram";
 
 /**
  * BpmnDefinitions - Root BPMN element
  */
 export class BpmnDefinitions {
     public readonly namespaces: Map<string, string>;
+    public diagram?: BpmnDiagram;
 
     constructor(
         public readonly id: string,
@@ -21,5 +23,9 @@ export class BpmnDefinitions {
             ['ifl', 'http:///com.sap.ifl.model/Ifl.xsd'],
             ['xsi', 'http://www.w3.org/2001/XMLSchema-instance']
         ]);
+    }
+
+    setDiagram(diagram: BpmnDiagram): void {
+        this.diagram = diagram;
     }
 }

@@ -18,23 +18,34 @@ export class CallActivityWriter {
         lines.push(`<bpmn2:callActivity id="${node.id}" name="${this.escape(node.name)}">`);
 
         lines.push(`    <bpmn2:extensionElements>`);
-        if (node.iflProperties.length > 0) {
-            lines.push(this.propertyWriter.writeAll(node.iflProperties, "        "));
-        } else {
-            // Add default properties for Content Modifier
-            lines.push(`        <ifl:property>`);
-            lines.push(`            <key>componentVersion</key>`);
-            lines.push(`            <value>1.6</value>`);
-            lines.push(`        </ifl:property>`);
-            lines.push(`        <ifl:property>`);
-            lines.push(`            <key>activityType</key>`);
-            lines.push(`            <value>Enricher</value>`);
-            lines.push(`        </ifl:property>`);
-            lines.push(`        <ifl:property>`);
-            lines.push(`            <key>cmdVariantUri</key>`);
-            lines.push(`            <value>ctype::FlowstepVariant/cname::Enricher/version::1.6.3</value>`);
-            lines.push(`        </ifl:property>`);
+
+        // Convert node.properties to ifl:property elements
+        const properties = node.properties;
+
+        // Ensure mandatory properties are present
+        const mandatoryProperties: Record<string, string> = {
+            'bodyType': properties.bodyType || 'constant',
+            'propertyTable': properties.propertyTable || '',
+            'headerTable': properties.headerTable || '',
+            'wrapContent': properties.wrapContent || '',
+            'componentVersion': properties.componentVersion || '1.6',
+            'activityType': properties.activityType || 'Enricher',
+            'cmdVariantUri': properties.cmdVariantUri || 'ctype::FlowstepVariant/cname::Enricher/version::1.6.3'
+        };
+
+        // Add body property if present
+        if (properties.body) {
+            mandatoryProperties['body'] = properties.body;
         }
+
+        // Write all properties
+        Object.entries(mandatoryProperties).forEach(([key, value]) => {
+            lines.push(`        <ifl:property>`);
+            lines.push(`            <key>${key}</key>`);
+            lines.push(`            <value>${this.escape(String(value))}</value>`);
+            lines.push(`        </ifl:property>`);
+        });
+
         lines.push(`    </bpmn2:extensionElements>`);
 
         incoming.forEach(flowId => {

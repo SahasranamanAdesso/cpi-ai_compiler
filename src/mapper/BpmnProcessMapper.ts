@@ -6,6 +6,9 @@ import { BpmnDefinitions } from "../ir/BpmnDefinitions";
 import { BpmnCollaboration } from "../ir/BpmnCollaboration";
 import { BpmnParticipant } from "../ir/BpmnParticipant";
 import { BpmnMessageFlow } from "../ir/BpmnMessageFlow";
+import { BpmnDiagram } from "../ir/BpmnDiagram";
+import { BpmnShape } from "../ir/BpmnShape";
+import { BpmnEdge } from "../ir/BpmnEdge";
 import { ComponentMapper } from "./ComponentMapper";
 
 /**
@@ -99,6 +102,16 @@ export class BpmnProcessMapper {
         senderParticipant.addProperty("ifl:type", "EndpointSender");
         collaboration.addParticipant(senderParticipant);
 
+        // Add receiver adapter participant
+        // Note: SAP uses "EndpointRecevier" (typo) - must match exactly
+        const receiverParticipant = new BpmnParticipant(
+            "Participant_2",
+            "Receiver",
+            "EndpointRecevier"
+        );
+        receiverParticipant.addProperty("ifl:type", "EndpointRecevier");
+        collaboration.addParticipant(receiverParticipant);
+
         // Add process participant
         const processParticipant = new BpmnParticipant(
             "Participant_Process_1",
@@ -186,7 +199,166 @@ export class BpmnProcessMapper {
         senderMessageFlow.addProperty("clientCertificates", "");
         collaboration.addMessageFlow(senderMessageFlow);
 
-        return new BpmnDefinitions("Definitions_1", collaboration, process);
+        // Message flow from end event to receiver with HTTP adapter properties
+        const receiverMessageFlow = new BpmnMessageFlow(
+            "MessageFlow_5",
+            "HTTP",
+            "EndEvent_2",
+            "Participant_2"
+        );
+        receiverMessageFlow.addProperty("apiName", "");
+        receiverMessageFlow.addProperty("Description", "");
+        receiverMessageFlow.addProperty("methodSourceExpression", "");
+        receiverMessageFlow.addProperty("apiArtifactType", "");
+        receiverMessageFlow.addProperty("providerAuth", "");
+        receiverMessageFlow.addProperty("retryOnExceptionsTable", "");
+        receiverMessageFlow.addProperty("ComponentNS", "sap");
+        receiverMessageFlow.addProperty("privateKeyAlias", "");
+        receiverMessageFlow.addProperty("httpMethod", "POST");
+        receiverMessageFlow.addProperty("apiprovider_location_id", "");
+        receiverMessageFlow.addProperty("allowedResponseHeaders", "*");
+        receiverMessageFlow.addProperty("Name", "HTTP");
+        receiverMessageFlow.addProperty("internetProxyType", "");
+        receiverMessageFlow.addProperty("TransportProtocolVersion", "1.20.1");
+        receiverMessageFlow.addProperty("retryOnException", "false");
+        receiverMessageFlow.addProperty("proxyPort", "");
+        receiverMessageFlow.addProperty("ComponentSWCVName", "external");
+        receiverMessageFlow.addProperty("streaming", "false");
+        receiverMessageFlow.addProperty("enableMPLAttachments", "true");
+        receiverMessageFlow.addProperty("pooledConnectionIdleTimeout", "300000");
+        receiverMessageFlow.addProperty("httpAddressQuery", "");
+        receiverMessageFlow.addProperty("httpRequestTimeout", "60000");
+        receiverMessageFlow.addProperty("ComponentSWCVId", "1.20.1");
+        receiverMessageFlow.addProperty("providerName", "");
+        receiverMessageFlow.addProperty("allowedRequestHeaders", "traceparent");
+        receiverMessageFlow.addProperty("MessageProtocol", "None");
+        receiverMessageFlow.addProperty("direction", "Receiver");
+        receiverMessageFlow.addProperty("ComponentType", "HTTP");
+        receiverMessageFlow.addProperty("httpShouldSendBody", "false");
+        receiverMessageFlow.addProperty("throwExceptionOnFailure", "true");
+        receiverMessageFlow.addProperty("proxyType", "default");
+        receiverMessageFlow.addProperty("componentVersion", "1.20");
+        receiverMessageFlow.addProperty("retryIteration", "1");
+        receiverMessageFlow.addProperty("proxyHost", "");
+        receiverMessageFlow.addProperty("providerUrl", "");
+        receiverMessageFlow.addProperty("retryOnConnectionFailure", "false");
+        receiverMessageFlow.addProperty("system", "Receiver");
+        receiverMessageFlow.addProperty("authenticationMethod", "Client Certificate");
+        receiverMessageFlow.addProperty("locationID", "");
+        receiverMessageFlow.addProperty("retryInterval", "5");
+        receiverMessageFlow.addProperty("TransportProtocol", "HTTP");
+        receiverMessageFlow.addProperty("cmdVariantUri", "ctype::AdapterVariant/cname::sap:HTTP/tp::HTTP/mp::None/direction::Receiver/version::1.20.1");
+        receiverMessageFlow.addProperty("httpErrorResponseCodes", "");
+        receiverMessageFlow.addProperty("credentialName", "");
+        receiverMessageFlow.addProperty("apiDisplayName", "");
+        receiverMessageFlow.addProperty("MessageProtocolVersion", "1.20.1");
+        receiverMessageFlow.addProperty("providerRelativeUrl", "");
+        receiverMessageFlow.addProperty("httpAddressWithoutQuery", "");
+        collaboration.addMessageFlow(receiverMessageFlow);
+
+        // Create BPMN Diagram with visual layout
+        const diagram = this.createDiagram(collaboration, process);
+        const definitions = new BpmnDefinitions("Definitions_1", collaboration, process);
+        definitions.setDiagram(diagram);
+
+        return definitions;
+    }
+
+    /**
+     * Creates BPMN Diagram with layout coordinates
+     *
+     * This generates the visual layout information required by SAP Integration Suite.
+     * Layout coordinates are derived from SAP reference artifact.
+     *
+     * Layout:
+     * - Sender participant: (40, 100), 100x140
+     * - Start event: (292, 142), 32x32
+     * - Call activity: (412, 132), 100x60
+     * - End event: (703, 142), 32x32
+     * - Receiver participant: (900, 100), 100x140
+     * - Process participant: (250, 60), 540x220
+     */
+    private createDiagram(collaboration: BpmnCollaboration, process: BpmnProcess): BpmnDiagram {
+        const diagram = new BpmnDiagram(
+            "BPMNDiagram_1",
+            "Default Collaboration Diagram",
+            "BPMNPlane_1",
+            "Collaboration_1"
+        );
+
+        // Add shapes for all participants
+        collaboration.participants.forEach(participant => {
+            if (participant.id === "Participant_1") {
+                // Sender participant
+                diagram.addShape(new BpmnShape(participant.id, participant.id, 40, 100, 100, 140));
+            } else if (participant.id === "Participant_2") {
+                // Receiver participant
+                diagram.addShape(new BpmnShape(participant.id, participant.id, 900, 100, 100, 140));
+            } else if (participant.id === "Participant_Process_1") {
+                // Integration Process participant
+                diagram.addShape(new BpmnShape(participant.id, participant.id, 250, 60, 540, 220));
+            }
+        });
+
+        // Add shapes for process elements
+        process.nodes.forEach(node => {
+            if (node.type === "startEvent") {
+                diagram.addShape(new BpmnShape(node.id, node.id, 292, 142, 32, 32));
+            } else if (node.type === "endEvent") {
+                diagram.addShape(new BpmnShape(node.id, node.id, 703, 142, 32, 32));
+            } else if (node.type === "callActivity") {
+                diagram.addShape(new BpmnShape(node.id, node.id, 412, 132, 100, 60));
+            }
+        });
+
+        // Add edges for sequence flows
+        process.flows.forEach(flow => {
+            const edge = new BpmnEdge(
+                flow.id,
+                flow.id,
+                `BPMNShape_${flow.sourceRef}`,
+                `BPMNShape_${flow.targetRef}`
+            );
+
+            // Calculate waypoints based on source and target positions
+            if (flow.sourceRef === "StartEvent_2" && flow.targetRef === "CallActivity_1") {
+                edge.addWaypoint(308, 160);
+                edge.addWaypoint(462, 160);
+            } else if (flow.sourceRef === "CallActivity_1" && flow.targetRef === "EndEvent_2") {
+                edge.addWaypoint(462, 160);
+                edge.addWaypoint(719, 160);
+            } else {
+                // Generic waypoint calculation for other flows
+                edge.addWaypoint(400, 160);
+                edge.addWaypoint(500, 160);
+            }
+
+            diagram.addEdge(edge);
+        });
+
+        // Add edges for message flows
+        collaboration.messageFlows.forEach(flow => {
+            const edge = new BpmnEdge(
+                flow.id,
+                flow.id,
+                `BPMNShape_${flow.sourceRef}`,
+                `BPMNShape_${flow.targetRef}`
+            );
+
+            if (flow.id === "MessageFlow_4") {
+                // Sender to StartEvent
+                edge.addWaypoint(90, 170);
+                edge.addWaypoint(308, 158);
+            } else if (flow.id === "MessageFlow_5") {
+                // EndEvent to Receiver
+                edge.addWaypoint(719, 158);
+                edge.addWaypoint(950, 170);
+            }
+
+            diagram.addEdge(edge);
+        });
+
+        return diagram;
     }
 
 }

@@ -1,6 +1,7 @@
 import { BpmnDefinitions } from "../ir/BpmnDefinitions";
 import { CollaborationWriter } from "./CollaborationWriter";
 import { ProcessWriter } from "./ProcessWriter";
+import { BpmnDiagramWriter } from "./BpmnDiagramWriter";
 
 /**
  * DefinitionsWriter - Writes root BPMN <definitions> element
@@ -19,12 +20,14 @@ import { ProcessWriter } from "./ProcessWriter";
  *       id="Definitions_1">
  *       <collaboration>...</collaboration>
  *       <process>...</process>
+ *       <bpmndi:BPMNDiagram>...</bpmndi:BPMNDiagram>
  *   </bpmn2:definitions>
  */
 export class DefinitionsWriter {
 
     private collaborationWriter = new CollaborationWriter();
     private processWriter = new ProcessWriter();
+    private diagramWriter = new BpmnDiagramWriter();
 
     write(definitions: BpmnDefinitions): string {
         const lines: string[] = [];
@@ -49,6 +52,11 @@ export class DefinitionsWriter {
 
         // Process
         lines.push(this.indent(this.processWriter.write(definitions.process), "    "));
+
+        // BPMN Diagram (visual layout)
+        if (definitions.diagram) {
+            lines.push(this.indent(this.diagramWriter.write(definitions.diagram), "    "));
+        }
 
         lines.push(`</bpmn2:definitions>`);
 
