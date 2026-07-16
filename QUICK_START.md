@@ -12,7 +12,7 @@ Your `.env` file is already configured for **adesso AI Hub**:
 USE_ADESSO_AI_HUB=true
 ADESSO_AI_HUB_API_KEY=sk-qDQfqmDMt_ea7J3MXBGiDA
 ADESSO_AI_HUB_URL=https://adesso-ai-hub.3asabc.de/v1/messages
-ADESSO_AI_HUB_MODEL=claude-3-5-sonnet-20241022
+ADESSO_AI_HUB_MODEL=claude-sonnet-4-6
 ```
 
 ✅ Configuration complete!
@@ -105,10 +105,12 @@ adds a welcome message, and forwards to the backend
 ## What You're Using
 
 - **AI Provider:** adesso AI Hub
-- **Model:** Claude 3.5 Sonnet
+- **Model:** Claude Sonnet 4.6
 - **Endpoint:** https://adesso-ai-hub.3asabc.de/v1/messages
 - **Compiler:** SAP Integration SDK v1.0
 - **Supported Components:** Content Modifier (Enricher)
+
+> **Note:** See `AVAILABLE_MODELS.md` for other models you can use
 
 ---
 
