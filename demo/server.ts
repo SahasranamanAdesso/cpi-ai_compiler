@@ -29,6 +29,7 @@ const useAdessoAIHub = process.env.USE_ADESSO_AI_HUB === 'true';
 
 let provider;
 let providerName: string;
+let isConfigured = false;
 
 if (useAdessoAIHub) {
     // Use adesso AI Hub
@@ -51,6 +52,7 @@ if (useAdessoAIHub) {
 
     provider = new AdessoAIHubProvider(apiKey, apiUrl, model);
     providerName = 'adesso AI Hub';
+    isConfigured = true;
 } else {
     // Use Claude directly
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -69,6 +71,7 @@ if (useAdessoAIHub) {
 
     provider = new ClaudeProvider(apiKey);
     providerName = 'Claude API';
+    isConfigured = true;
 }
 
 // Create AI pipeline and generator
@@ -181,7 +184,8 @@ app.post('/api/generate', async (req, res) => {
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'ok',
-        apiKeyConfigured: !!apiKey,
+        provider: providerName,
+        apiKeyConfigured: isConfigured,
         timestamp: new Date().toISOString()
     });
 });
